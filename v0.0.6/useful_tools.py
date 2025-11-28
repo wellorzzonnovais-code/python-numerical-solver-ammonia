@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a temporary script file.
+"""
+
+# Tools for conversions
+
+def xmass_to_xmol(xmass,mass_weight1,mass_weight2):
+    xmol_converted = (xmass/mass_weight1)/(xmass/mass_weight1 + (1-xmass)/mass_weight2)
+    return xmol_converted
+
+pressure_MPa_to_Pa = pow(10,6)
+
+pressure_bar_to_Pa = pow(10,5)
+
+pressure_atm_to_Pa = 101325
