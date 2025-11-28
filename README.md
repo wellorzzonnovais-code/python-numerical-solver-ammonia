@@ -44,7 +44,7 @@ For professional inquiries or discussions about the code and its applications, p
 # 🇧🇷 VERSÃO EM PORTUGUÊS
 
 ## PYTHON-NUMERICAL-SOLVER-AMMONIA
-## ENCONTRe PROPRIEDADES DE AMÔNIA-ÁGUA USANDO IAPWS
+## ENCONTRE PROPRIEDADES DE AMÔNIA-ÁGUA USANDO IAPWS
 
 ---
 
