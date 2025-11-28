@@ -7,7 +7,7 @@
 
 ### Project Summary: Efficient Numerical Solver
 
-This repository showcases a high-performance **Python solver** developed to determine the thermodynamic properties of the ammonia-water pair (based on IAWPS standards, using pressure instead of density).
+This repository showcases a **Python solver** developed to determine the thermodynamic properties of the ammonia-water pair (based on IAWPS standards, using pressure instead of density).
 
 The project’s main purpose was to achieve **minimal execution time** by implementing and comparing advanced root-finding numerical methods, demonstrating strong expertise in **algorithmic efficiency** and robust code design.
 
@@ -50,7 +50,7 @@ For professional inquiries or discussions about the code and its applications, p
 
 ### Resumo do Projeto: Solver Numérico Eficiente
 
-Este repositório apresenta um **solver em Python** de alto desempenho, desenvolvido para determinar as propriedades termodinâmicas do par amônia-água (baseado nas normas IAWPS, utilizando pressão em vez de densidade).
+Este repositório apresenta um **solver em Python** desenvolvido para determinar as propriedades termodinâmicas do par amônia-água (baseado nas normas IAWPS, utilizando pressão em vez de densidade).
 
 O objetivo principal do projeto foi alcançar o **tempo mínimo de execução** através da implementação e comparação de métodos numéricos avançados de busca de raízes, demonstrando forte expertise em **eficiência algorítmica** e design de código robusto.
 
