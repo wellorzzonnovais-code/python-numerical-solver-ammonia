@@ -22,7 +22,7 @@ Version 0.0.8
 
 # import iapws.ammonia as ammonia
 # import src.modules.changevar as changevar
-# import src.utils.useful_tools as tools
+# import useful_tools as tools
 
 # # MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
 # # MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
