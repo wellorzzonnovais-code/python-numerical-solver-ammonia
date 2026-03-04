@@ -131,6 +131,22 @@ TO DO:
     - (medium) Create an automated error test within these ranges with PyCheck.
     - (low) Include error when number of divisions is not an integer;
 
+
+--------------------------------------
+Version 0.0.12
+--
+Changed errors to print a message and raise it to another upper "software", only for bissection Method.
+
+
+TO DO:
+    - (high) Recheck if all raised errors for bissection method is working.
+    - (high) Treat the specific exception errors for Newton-Raphson and Hybrid Methods. References: 
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+    - (high) Check for "optional codes" on all methods and delete them if they are not needed.
+    - (medium) Create an automated error test within these ranges with PyCheck.
+    - (low) Include error when number of divisions is not an integer;
+
 """
 
 import iapws
@@ -164,7 +180,7 @@ def function_P_rho(rho, T, xmol, P_target): # Definition of function
         function = (iapws.ammonia.H2ONH3()._prop(rho, T, xmol).get("P") * ut.pressure_MPa_to_Pa) - P_target       # Function that gives zero when target pressure is acchieved
         return function     # return function
     except Exception as error:     # When the function has an error, goes to this line
-        return print("Error in guess = " + str(rho) + ". \n", error)   # Expression to inform that it has an error.
+        print("Error in guess = " + str(rho) + ". \n", error  + "\n--------------------------------------\n")   # Expression to inform that it has an error.
         raise
 
 
@@ -236,9 +252,11 @@ def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_it
             function_x_min = function_P_rho(x_min, T, xmol, P_target) # [bar]     # Define the function solution at x_min
             function_x_avg = function_P_rho(x_avg, T, xmol, P_target) # [bar]     # Define the function solution at x_máx
         except ValueError as error:
-            return("Error from function function_P_rho: \n" + str(error))
+            print("Error from function function_P_rho: \n" + str(error) + "\n--------------------------------------\n")
+            raise
         except Exception as error:
-            return("Unknown error: \nprobably there was an internal error from iapws.ammonia.NH3H2O._prop module. Please, check the input values and iapws module range. \nMore details about the error: " + str(error))
+            print("Unknown error: \nprobably there was an internal error from iapws.ammonia.NH3H2O._prop module. Please, check the input values and iapws module range. \nMore details about the error: " + str(error) + "\n--------------------------------------\n")
+            raise
         if i > 1 and (abs(function_x_avg/P_target) < tolerance):   # Check if function in x_avg is zero or relative error in function solution is less than tolerance
             return x_avg    # return x average
         elif function_x_min*function_x_avg > 0:     # Check if the function solution in x_avg has the same signal than in x_min
@@ -281,21 +299,26 @@ def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max,
     try:
         x_ranges = divide_into_ranges(density_guess_min,density_guess_max,n_divisions)  # Divide rho range into small ones
     except ValueError as error:
-        return("Error from function divide_into_ranges: \n" + str(error))
+        print("Error from function divide_into_ranges: \n" + str(error) + "\n--------------------------------------\n")
+        raise
     function_ranges = []    # Define a list of function ranges
     for x_min, x_max in x_ranges:   # For each x_min and x_max in the list of list from x_ranges, do:
         try:
             function_ranges.append([function_P_rho(x_min, T, xmol, P_target), function_P_rho(x_max, T, xmol, P_target)])    # Add a list of function solution pair in x_min and x_max (range)
         except ValueError as error:
-            return("Error from function function_P_rho: \n" + str(error))
+            print("Error from function function_P_rho: \n" + str(error) + "\n--------------------------------------\n")
+            raise
         except Exception as error:
-            return("Unknown error: \nprobably there was an internal error from iapws.ammonia.NH3H2O._prop module. Please, check the input values and iapws module range. \nMore details about the error: " + str(error))
+            print("Unknown error: \nprobably there was an internal error from iapws.ammonia.NH3H2O._prop module. Please, check the input values and iapws module range. \nMore details about the error: " + str(error) + "\n--------------------------------------\n")
+            raise
     try: 
         x_zero_ranges = x_with_zero_ranges(x_ranges, function_ranges)  # Check if there are zeros between the ranges
     except TypeError as error:
-        return("Error from function x_with_zero_ranges: \n" + str(error))
+        print("Error from function x_with_zero_ranges: \n" + str(error) + "\n--------------------------------------\n")
+        raise
     except RuntimeWarning as warning:
-        return("Warning from function x_with_zero_ranges: \n" + str(warning))
+        print("Warning from function x_with_zero_ranges: \n" + str(warning) + "\n--------------------------------------\n")
+        raise
 
 # Check if I have a range or zero points, and apply bisection method just within ranges
     x_with_zero = []    # Create a list of this variable
@@ -306,9 +329,11 @@ def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max,
             try:
                 x_zero = find_zero_bisection_rho(P_target,T,xmol,x[0],x[1],tolerance,limit_iterations)     # Apply the bissection method to find a zero
             except ValueError as error:
-                return("Error from function find_zero_bisection_rho: \n" + str(error))
+                print("Error from function find_zero_bisection_rho: \n" + str(error) + "\n--------------------------------------\n")
+                raise
             except StopIteration as stop:
-                return("Limit iterations reached in function find_zero_bisection_rho: \n" + str(stop))
+                print("Limit iterations reached in function find_zero_bisection_rho: \n" + str(stop) + "\n--------------------------------------\n")
+                raise                
             x_with_zero.append(x_zero)  # Add the found zero into the list of x with solution equal to zero in function_P_rho
             
    

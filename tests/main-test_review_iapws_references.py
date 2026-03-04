@@ -31,4 +31,4 @@ MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o docu
 xmass = ut.xmol_to_xmass(xmol, MW_NH3, MW_H2O)
 
 print("\n")
-print(changevar.my_prop_bissection(P, T, xmass, 0.1, 25.1, 10, pow(10,-7), 30))
+print(changevar.my_prop_bissection(P, T, xmass, -0.1, 25.1, 10, pow(10,-7), 30))

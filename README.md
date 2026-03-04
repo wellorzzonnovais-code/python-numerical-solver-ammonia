@@ -11,7 +11,7 @@ The project’s main purpose was to achieve **minimal execution time** by implem
 
 Note: Code developed around Jun 2021 to Oct 2021.
 
-
+---
 
 ### Application & Research Potential
 
@@ -19,6 +19,14 @@ This program can serve as a powerful tool to **support new research and developm
 
 ---
 
+### Notes
+
+This codebase focuses heavily on **efficiency** and **error management**:
+
+1.  **Algorithmic Efficiency (Hybrid Method):**
+    * Implementation of a **Hybrid Solver** that combines the **Bisection Method** and the **Newton-Raphson Method** to ensure rapid convergence (minimal iterations) and stable zero-finding for complex, non-linear equations.
+2.  **Error Handling & Diagnostics:**
+    * Includes comprehensive **error messages**, iteration counters, and function call tracing within the custom solver to ensure stability and aid in swift debugging—critical for production-level code.
 
 ### Contact
 
