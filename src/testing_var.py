@@ -6,7 +6,7 @@ Created on Fri Jul 30 16:43:01 2021
 @author: unknown
 """
 
-import modules.changevar as changevar
+import src.modules.changevar as changevar
 import time
 
 
