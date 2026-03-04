@@ -5,6 +5,15 @@ Spyder Editor
 This is a temporary script file.
 """
 
+"""
+Version 0.0.1 to 0.0.6
+Some changes (not described)
+
+Version 0.0.7
+
+Added xmol_to_xmass function
+"""
+
 # Tools for conversions
 
 def xmass_to_xmol(xmass,mass_weight1,mass_weight2):

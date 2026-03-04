@@ -13,14 +13,16 @@ Nothing done.
 Version 0.0.7
 Try triple point automatically
 
+Version 0.0.8
+-- nothing done --
 """
 
 
 # -----------------------------------------------------------------------------
 
 # import iapws.ammonia as ammonia
-# import changevar
-# import useful_tools as tools
+# import src.modules.changevar as changevar
+# import src.utils.useful_tools as tools
 
 # # MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
 # # MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
@@ -46,7 +48,7 @@ Try triple point automatically
 
 # -----------------------------------------------------------------------------
 
-# import changevar
+# import src.modules.changevar as changevar
 
 # P = 10000
 # T = 100
@@ -87,31 +89,31 @@ Try triple point automatically
 import src.modules.changevar as changevar
 import time
 
-# start_time_BS = time.time() # Measuring above 0.1 seconds
+start_time_BS = time.time() # Measuring above 0.1 seconds
 
-# print(changevar.my_prop_bissection(400000, 393.25, 0.42, 20.1, 25.1, 10, pow(10,-7), 30))
+print(changevar.my_prop_bissection(1500000, 393.25, 0.42, 0.1, 25.1, 10, pow(10,-7), 30))
 
-# print()
-# executionTime = (time.time() - start_time_BS)
-# print("--- %s seconds ---" % executionTime)
+print()
+executionTime = (time.time() - start_time_BS)
+print("--- %s seconds ---" % executionTime)
 
 
 
-# start_time_NR = time.time() # Measuring above 0.1 seconds
+start_time_NR = time.time() # Measuring above 0.1 seconds
 
-# print()
-# print(changevar.my_prop_newraph(1500000, 393.25, 0.42, 0.1, 25.1, 10, pow(10,-7), 300))
+print()
+print(changevar.my_prop_newraph(1500000, 393.25, 0.42, 0.1, 25.1, 10, pow(10,-7), 30))
 
-# print()
-# executionTime = (time.time() - start_time_NR)
-# print("--- %s seconds ---" % executionTime)
+print()
+executionTime = (time.time() - start_time_NR)
+print("--- %s seconds ---" % executionTime)
 
 
 
 start_time_HB = time.time() # Measuring above 0.1 seconds
 
 print()
-print(changevar.my_prop_hybrid(1500000, 393.25, 0.42, 10.1, 25.1, 10, pow(10,-1), pow(10,-7), 300))
+print(changevar.my_prop_hybrid(1500000, 393.25, 0.42, 0.1, 25.1, 10, pow(10,-1), pow(10,-7), 30))
 
 print()
 executionTime = (time.time() - start_time_HB)

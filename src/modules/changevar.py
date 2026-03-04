@@ -66,6 +66,22 @@ TO DO:
     - Create an automated error test within these ranges.
     - Introduce error description for each (all) function/definition.
 
+
+--------------------------------------
+Version 0.0.8
+--
+Updated error and warning systems for all functions defined;
+Restrictions for some obvious value errors were created;
+Warnings for having two density solutions were created;
+
+
+TO DO:
+    - Describe each warning and error system inside code;
+    - Create a checker to determine if the function variables are within the specified range from IAPWS;
+    - Treat the specific exception errors in iapws function applyance. References: 
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+    - Create an automated error test within these ranges with PyCheck.
 """
 
 import iapws
@@ -89,6 +105,8 @@ def function_P_rho(rho, T, xmol, P_target): # Definition of function
     # if P_target > (40*pow(10,6)):
     #     return print("Pressure overspecified! Try P <= 40 MPa.")
     #     break
+    if rho<=0 or T<0 or xmol<0 or xmol>1 or P_target<0:
+        raise ValueError("One or more input variables has invalid value. Please check them!")
     try:       # if the function fails, move to the other line "except"
         function = (iapws.ammonia.H2ONH3()._prop(rho, T, xmol).get("P") * ut.pressure_MPa_to_Pa) - P_target       # Function that gives zero when target pressure is acchieved
         return function     # return function
@@ -104,7 +122,9 @@ def function_P_rho(rho, T, xmol, P_target): # Definition of function
 # x_max = higher value of defined range
 # n_divisions = number of divisions
 
-def divide_into_ranges(x_min, x_max, n_divisions):  # Definition of divisions to make
+def divide_into_ranges(x_min, x_max, n_divisions):  # Definition of divisions to make, returning a list at the end
+    if n_divisions<1:
+        raise ValueError("Number of divisions has invalid value. Please check it!")
     diff = (x_max - x_min)/n_divisions      # size of each division
     list = []       # creates a list
     i = 1   # variable created just to iterate with each division
@@ -123,12 +143,16 @@ def divide_into_ranges(x_min, x_max, n_divisions):  # Definition of divisions to
 # function_ranges = list containing a list of solutions for lower and higher values of a range, respectively.
 
 def x_with_zero_ranges(x_ranges, function_ranges):   # Define the function
+    if not(isinstance(x_ranges, list)) or not(isinstance(function_ranges, list)):
+        raise TypeError("x_ranges or function_ranges is not a list. Please check it!")
     x_ranges_with_zero = []     # Creates the output with the x ranges with zero(s) inside.
     i = 0   # iteration number
     for f in function_ranges:   # for each function range (list) in the list specified (list inside a list)
         if (f[0]*f[1] < 0): # Check if the x_min and x_máx has different signals (to cross a zero)
             x_ranges_with_zero.append(x_ranges[i])  # Add this zero range
         i += 1  # Increases the iteration variable to go to the next value
+    if x_ranges_with_zero == []:
+        raise RuntimeWarning("A range with zero point was not found. Try changing density range or increase the number of initial divisions (n_divisions), among other possible changes.")     # Message that a zero has not found.
     return x_ranges_with_zero   # Returnonly the x ranges with zero(s) in the middle.
 
 
@@ -144,6 +168,12 @@ def x_with_zero_ranges(x_ranges, function_ranges):   # Define the function
 # limit_iterations = limit number of iterations [-]
 
 def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_iterations):    # Defines this function 
+    if x_max <= x_min:
+        raise ValueError("Please check minimum and maximum values of x range.")
+    if tolerance <= 0 or limit_iterations <= 0:
+        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")
+    if P_target<0 or T<0 or xmol<0 or xmol>1 or x_min<=0 or x_max<=0  :
+        raise ValueError("One or more input variables has invalid value. Please check them!")
     i = 1   # variable just to iterate
     # x_avg_before = 0
     # function_x_avg_before = 0
@@ -179,6 +209,13 @@ def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_it
 # limit_iterations = limit number of iterations [-]
 
 def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max, n_divisions, tolerance, limit_iterations):  # Defines the function
+    if density_guess_min > 0.1:
+        print("\nWarning: can exist a lower density number. Try decreasing density_guess_min below 0.1 kg/m³ at least.\n")
+    if P_target<0 or T<0 or xmass<0 or xmass>1 or density_guess_min<=0 or density_guess_max<=0 or n_divisions<1:
+        raise ValueError("One or more input variables has negative or zero value (in case of density, for example). Please check them!")
+    if tolerance <= 0 or limit_iterations <= 0:
+        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")
+    
     MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
     MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
     xmol = ut.xmass_to_xmol(xmass,MW_NH3,MW_H2O) # [mol/mol]  # Transformation of mass fraction into molar fraction
@@ -207,7 +244,11 @@ def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max,
         
     prop = {}   # Creating the properties dictionary
     prop["M"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("M")     # Property Mixture molecular mass, [g/mol]
-    prop["rho"] = rho_found     # Property Density, [kg/m³]
+    if len(x_with_zero)>1:
+        prop["rho*"] = rho_found     # Property Density, [kg/m³]
+        print("\nThere is another solution for rho higher than this one.\n")
+    else:
+        prop["rho"] = rho_found     # Property Density, [kg/m³]
     prop["u"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("u")     # Property Specific internal energy, [kJ/kg]
     prop["s"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("s")     # Property Specific entropy, [kJ/kgK]
     prop["h"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("h")     # Property Specific enthalpy, [kJ/kg]
@@ -227,6 +268,8 @@ def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max,
 # list_of_guesses_or_ranges = a list containing ranges (two numbers inside a list) or even values.
 
 def listoflists_into_avgnumbers(list_of_guesses_or_ranges):     # Define the transformation function
+    if not(isinstance(list_of_guesses_or_ranges, list)):
+        raise TypeError("list_of_guesses_or_ranges is not a list. Please check it!")
     list_avg = []   # Creates a list named list_avg
     for n in list_of_guesses_or_ranges:     # For each range specified in the list, do:
         if not(isinstance(n, list)):    # If n is not a list (which means it is not a range, for this case)
@@ -248,6 +291,10 @@ def listoflists_into_avgnumbers(list_of_guesses_or_ranges):     # Define the tra
 # limit_iterations = limit number of iterations [-]
 
 def find_zero_newtonraphson_rho(P_target, T, xmol, x_value, tolerance, limit_iterations):     # Define this functions with those parameters
+    if P_target<0 or T<0 or xmol<0 or xmol>1 or x_value<=0:
+        raise ValueError("One or more input variables has invalid value. Please check them!")  
+    if tolerance <= 0 or limit_iterations <= 0:
+        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")
     i = 1   # Define the iteration variable
     while i <= limit_iterations:    # Definition of loop according to number of iterations
         x_value_minusStep = x_value*(1-tolerance)   # Calculate a nearby x (lower value) to estimate the differential funciton numerically with "tolerance" variation in x. NOTE: other values than tolerance can be used.
@@ -268,7 +315,6 @@ def find_zero_newtonraphson_rho(P_target, T, xmol, x_value, tolerance, limit_ite
  
     if i > limit_iterations:    # If the number of iteration has exceeded, an error message appears
         raise StopIteration("Method failed to find a zero zolution within " + str(i-1) + " iteration(s). Try increase limit number of iterations.")   # Error message when limit_iterations has acchieved.
-    
 
 
 # --------------------------------------------------------------------------
@@ -284,6 +330,12 @@ def find_zero_newtonraphson_rho(P_target, T, xmol, x_value, tolerance, limit_ite
 # limit_iterations = limit number of iterations [-]
 
 def my_prop_newraph(P_target, T, xmass, density_guess_min, density_guess_max, n_divisions, tolerance, limit_iterations):  # Defines the function
+    if density_guess_min > 0.1:
+        print("\nWarning: can exist a lower density number. Try decreasing density_guess_min below 0.1 kg/m³ at least.\n")
+    if P_target<0 or T<0 or xmass<0 or xmass>1 or density_guess_min<=0 or density_guess_max<=0 or n_divisions<1:
+        raise ValueError("One or more input variables has negative or zero value (in case of density, for example). Please check them!")
+    if tolerance <= 0 or limit_iterations <= 0:
+        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")
     MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
     MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
     xmol = ut.xmass_to_xmol(xmass,MW_NH3,MW_H2O) # [mol/mol]  # Transformation of mass fraction into molar fraction
@@ -311,7 +363,11 @@ def my_prop_newraph(P_target, T, xmass, density_guess_min, density_guess_max, n_
 
     prop = {}   # Creating the properties dictionary
     prop["M"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("M")     # Property Mixture molecular mass, [g/mol]
-    prop["rho"] = rho_found     # Property Density, [kg/m³]
+    if len(x_with_zero)>1:
+        prop["rho*"] = rho_found     # Property Density, [kg/m³]
+        print("\nThere is another solution for rho higher than this one.\n")
+    else:
+        prop["rho"] = rho_found     # Property Density, [kg/m³]
     prop["u"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("u")     # Property Specific internal energy, [kJ/kg]
     prop["s"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("s")     # Property Specific entropy, [kJ/kgK]
     prop["h"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("h")     # Property Specific enthalpy, [kJ/kg]
@@ -340,6 +396,13 @@ def my_prop_newraph(P_target, T, xmass, density_guess_min, density_guess_max, n_
 # limit_iterations = limit number of iterations [-]
 
 def my_prop_hybrid(P_target, T, xmass, density_guess_min, density_guess_max, n_divisions, tolerance_BS, tolerance_NR, limit_iterations):
+    if density_guess_min > 0.1:
+        print("\nWarning: can exist a lower density number. Try decreasing density_guess_min below 0.1 kg/m³ at least.\n")
+    if P_target<0 or T<0 or xmass<0 or xmass>1 or density_guess_min<=0 or density_guess_max<=0 or n_divisions<1:
+        raise ValueError("One or more input variables has negative or zero value (in case of density, for example). Please check them!")
+    if tolerance_BS <= 0  or tolerance_NR <= 0 or limit_iterations <= 0:
+        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")
+    
     MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
     MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
     xmol = ut.xmass_to_xmol(xmass,MW_NH3,MW_H2O) # [mol/mol]  # Transformation of mass fraction into molar fraction
@@ -377,7 +440,11 @@ def my_prop_hybrid(P_target, T, xmass, density_guess_min, density_guess_max, n_d
 
     prop = {}   # Creating the properties dictionary
     prop["M"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("M")     # Property Mixture molecular mass, [g/mol]
-    prop["rho"] = rho_found     # Property Density, [kg/m³]
+    if len(x_with_zero_NR)>1:
+        prop["rho*"] = rho_found     # Property Density, [kg/m³]
+        print("\nThere is another solution for rho higher than this one.\n")
+    else:
+        prop["rho"] = rho_found     # Property Density, [kg/m³]
     prop["u"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("u")     # Property Specific internal energy, [kJ/kg]
     prop["s"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("s")     # Property Specific entropy, [kJ/kgK]
     prop["h"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("h")     # Property Specific enthalpy, [kJ/kg]
