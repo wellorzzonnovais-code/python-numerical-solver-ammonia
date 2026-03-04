@@ -47,6 +47,24 @@ TO DO:
     - Create a checker to determine if the function variables are within the specified range from IAPWS;
     - Introduce error description for each function/definition.
     - Create an automated error test within these ranges;
+    
+--------------------------------------
+Version 0.0.7
+--
+Introduced error description for some function/definition;
+Treated some specific exception errors in my python script. References of knowledge: 
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+Trying to create an automated error test in "Testing_var.py" using write/read files and while loop.
+
+
+TO DO:
+    - Create a checker to determine if the function variables are within the specified range from IAPWS;
+    - Treat the specific exception errors in iapws function applyance. References: 
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+    - Create an automated error test within these ranges.
+    - Introduce error description for each (all) function/definition.
 
 """
 
@@ -68,11 +86,15 @@ import src.utils.useful_tools as ut
 # P_target = pressure target [Pa]
 
 def function_P_rho(rho, T, xmol, P_target): # Definition of function
+    # if P_target > (40*pow(10,6)):
+    #     return print("Pressure overspecified! Try P <= 40 MPa.")
+    #     break
     try:       # if the function fails, move to the other line "except"
         function = (iapws.ammonia.H2ONH3()._prop(rho, T, xmol).get("P") * ut.pressure_MPa_to_Pa) - P_target       # Function that gives zero when target pressure is acchieved
         return function     # return function
-    except:     # When the function has an error, goes to this line
-        return print("Error in guess = " + str(rho) + ". \n")   # Expression to inform that it has an error.
+    except Exception as error:     # When the function has an error, goes to this line
+        return print("Error in guess = " + str(rho) + ". \n", error)   # Expression to inform that it has an error.
+        raise
 
 
 # --------------------------------------------------------------------------
@@ -140,8 +162,8 @@ def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_it
         # function_x_avg_before = function_x_avg
         
         
-    if i > limit_iterations:   # If the number of iterations exceed the number specified by the user, then shows an error (just printed)
-        return print("Method failed after " + str(i-1) + " iteration(s).")  # Error message shown to the user.
+    if i > limit_iterations: # If the number of iterations exceed the number specified by the user, then shows an error (just printed)
+        raise StopIteration("Method failed to find a zero zolution within " + str(i-1) + " iteration(s). Try increase limit number of iterations.")   # Error message when limit_iterations has acchieved.
 
 
 # --------------------------------------------------------------------------
@@ -179,7 +201,7 @@ def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max,
    
 # Printing answers
     if x_with_zero == []:   # If the list is empty means it was not found a zero, so a message appears
-        print("Those intervals does not have a zero point. Try refine the range or change values for guesses.")     # Message that a zero has not found.
+        raise RuntimeWarning("A zero point was not found. Try changing density range or increase the number of initial divisions (n_divisions).")     # Message that a zero has not found.
     else:   # If it has something inside the list, then:
         rho_found = x_with_zero[0]   # IMPORTANT: Here i am assuming only the first zero point is valid. This can be changed if necessary.
         
@@ -231,7 +253,7 @@ def find_zero_newtonraphson_rho(P_target, T, xmol, x_value, tolerance, limit_ite
         x_value_minusStep = x_value*(1-tolerance)   # Calculate a nearby x (lower value) to estimate the differential funciton numerically with "tolerance" variation in x. NOTE: other values than tolerance can be used.
         x_value_plusStep = x_value*(1+tolerance)   # Calculate a nearby x (lower value) to estimate the differential funciton numerically with "tolerance" variation in x. NOTE: other values than tolerance can be used.
         if x_value_minusStep <= 0 or x_value_plusStep <= 0:     # When these values are negative, FOR DENSITY, it has diverged.
-            return print("Error! Guess diverged after " + str(i) + " iterations, and a negative number for x was found. Check the input conditions.")
+            raise RuntimeError("Guess diverged after " + str(i) + " iterations, and a negative number for x (or density) was found. Check the input conditions.")
         differential_function = (function_P_rho(x_value_plusStep, T, xmol, P_target)-function_P_rho(x_value_minusStep, T, xmol, P_target))/(x_value_plusStep-x_value_minusStep)     # According to Newton-Raphson Method the numerical differential was created.
         if i==1:      
             function_x_value = function_P_rho(x_value, T, xmol, P_target)   # Calculates the solution for x_value
@@ -245,7 +267,7 @@ def find_zero_newtonraphson_rho(P_target, T, xmol, x_value, tolerance, limit_ite
             i += 1  # Update the iteration tracker variable
  
     if i > limit_iterations:    # If the number of iteration has exceeded, an error message appears
-        return print("Method failed after " + str(i-1) + " iteration(s).")  # Error message when limit_iterations has acchieved.
+        raise StopIteration("Method failed to find a zero zolution within " + str(i-1) + " iteration(s). Try increase limit number of iterations.")   # Error message when limit_iterations has acchieved.
     
 
 
@@ -283,7 +305,7 @@ def my_prop_newraph(P_target, T, xmass, density_guess_min, density_guess_max, n_
 
 # Printing answers
     if x_with_zero == []:    # If the list is empty means it was not found a zero, so a message appears
-        print("Those intervals does not have a zero point or diverged. Try refine the range or change values for guesses.")     # Message that a zero has not found.
+        raise RuntimeWarning("A zero point was not found or diverged. Try changing density range or increase the number of initial divisions (n_divisions).")     # Message that a zero has not found.
     else:   # If it has something inside the list, then:
         rho_found = x_with_zero[0]   # IMPORTANT: Here i am assuming only the first zero point is valid. This can be changed if necessary.
 
@@ -349,7 +371,7 @@ def my_prop_hybrid(P_target, T, xmass, density_guess_min, density_guess_max, n_d
 
 # Printing answers
     if x_with_zero_NR == []:    # If the list is empty means it was not found a zero, so a message appears
-        print("Those intervals does not have a zero point or diverged. Try refine the range or change values for guesses.")     # Message that a zero has not found.
+        raise RuntimeWarning("A zero point was not found or diverged. Try changing density range or increase the number of initial divisions (n_divisions).")     # Message that a zero has not found.
     else:   # If it has something inside the list, then:
         rho_found = x_with_zero_NR[0]   # IMPORTANT: Here i am assuming only the first zero point is valid. This can be changed if necessary.
 
