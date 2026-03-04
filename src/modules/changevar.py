@@ -2,9 +2,10 @@
 """
 Description
 --
-Find zero point using exclusively Bisection Method, exclusively Newton-Raphson Method, or with an hybrid method.
+This code changes the input variables from iapws.ammonia.NH3H2O to pressure, temperature and mass fraction. The thermodynamic model is valid for pressures below 40 MPa and at subcritical temperatures.
 
-Methods based on version 0.0.2 of each one, but with some changes on callings to functions using T_target, xmol_target and P_target.
+To achieve these gold, it is used a way to find zero point using exclusively Bisection Method, exclusively Newton-Raphson Method, or with an hybrid method. The methods based on version 0.0.2 of each one, but with some changes on callings to functions using T_target, xmol_target and P_target.
+
 """
 
 """
@@ -98,6 +99,19 @@ TO DO:
         https://www.youtube.com/watch?v=m08xaNwaFLc
     - (medium) Create an automated error test within these ranges with PyCheck.
     - (low) Include error when number of divisions is not an integer;
+    
+--------------------------------------
+Version 0.0.10
+--
+Created an error code for function limit of IAPWS: P <= 40 MPa, check in ref. 1. (the only requirement)
+
+
+TO DO:
+    - (??) Treat the specific exception errors in iapws function applyance. References: 
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+    - (medium) Create an automated error test within these ranges with PyCheck.
+    - (low) Include error when number of divisions is not an integer;
 
 """
 
@@ -124,6 +138,8 @@ def function_P_rho(rho, T, xmol, P_target): # Definition of function
     #     break
     if rho<=0 or T<0 or xmol<0 or xmol>1 or P_target<0:
         raise ValueError("One or more input variables has invalid value. Please check them!")	# Error if variable values are not valid for function_P_rho
+    if P_target>40000000:   # Pressure at subcritical temperatures
+        raise ValueError("This equation is valid for pressures up to 40 MPa. Please check the input value.")    # Error due to IAPWS model limitation.
     try:       # if the function fails, move to the other line "except"
         function = (iapws.ammonia.H2ONH3()._prop(rho, T, xmol).get("P") * ut.pressure_MPa_to_Pa) - P_target       # Function that gives zero when target pressure is acchieved
         return function     # return function
@@ -189,7 +205,7 @@ def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_it
         raise ValueError("Please check minimum and maximum values of x range.")	# Error when values for x_min and x_max are inverted
     if tolerance <= 0 or limit_iterations <= 0:
         raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")	# Error when negative values of tolerance and limit_iterations were applied.
-    if P_target<0 or T<0 or xmol<0 or xmol>1 or x_min<=0 or x_max<=0  :
+    if P_target<0 or T<0 or xmol<0 or xmol>1 or x_min<=0 or x_max<=0:
         raise ValueError("One or more input variables has invalid value. Please check them!")	# Error to check if variables has valid values.
     i = 1   # variable just to iterate
     # x_avg_before = 0
