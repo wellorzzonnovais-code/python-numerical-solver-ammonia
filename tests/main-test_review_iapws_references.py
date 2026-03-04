@@ -21,10 +21,10 @@ rho = 0.4521
 T = 460
 xmol = 1.0
 
-print(iapws.ammonia.H2ONH3()._prop(rho, T, xmol))
+# print(iapws.ammonia.H2ONH3()._prop(rho, T, xmol))
 
 
-P = 10001325
+P = 101325
 MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
 MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
 

@@ -113,6 +113,24 @@ TO DO:
     - (medium) Create an automated error test within these ranges with PyCheck.
     - (low) Include error when number of divisions is not an integer;
 
+
+--------------------------------------
+Version 0.0.11
+--
+Treated specific exception errors for Bissection Method, only, according to references:
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+Checked optional code that has no effect on Bissection Method (they can be deleted)
+
+
+TO DO:
+    - (high) Treat the specific exception errors for Newton-Raphson and Hybrid Methods. References: 
+        https://www.youtube.com/watch?v=RHSxIKGCX7c
+        https://www.youtube.com/watch?v=m08xaNwaFLc
+    - (high) Check for "optional codes" on all methods and delete them if they are not needed.
+    - (medium) Create an automated error test within these ranges with PyCheck.
+    - (low) Include error when number of divisions is not an integer;
+
 """
 
 import iapws
@@ -136,8 +154,10 @@ def function_P_rho(rho, T, xmol, P_target): # Definition of function
     # if P_target > (40*pow(10,6)):
     #     return print("Pressure overspecified! Try P <= 40 MPa.")
     #     break
-    if rho<=0 or T<0 or xmol<0 or xmol>1 or P_target<0:
-        raise ValueError("One or more input variables has invalid value. Please check them!")	# Error if variable values are not valid for function_P_rho
+    if rho<=0:
+        raise ValueError("Density must be higher than zero. Please check it!")	# Error if variable values are not valid for function_P_rho    
+    if T<0 or xmol<0 or xmol>1 or P_target<0:
+        raise ValueError("One or more input variables has an invalid value. Please check them!")	# Error if variable values are not valid for function_P_rho
     if P_target>40000000:   # Pressure at subcritical temperatures
         raise ValueError("This equation is valid for pressures up to 40 MPa. Please check the input value.")    # Error due to IAPWS model limitation.
     try:       # if the function fails, move to the other line "except"
@@ -157,7 +177,7 @@ def function_P_rho(rho, T, xmol, P_target): # Definition of function
 
 def divide_into_ranges(x_min, x_max, n_divisions):  # Definition of divisions to make, returning a list at the end
     if n_divisions<1:
-        raise ValueError("Number of divisions has invalid value. Please check it!")	# Error if number of divisions is less than zero
+        raise ValueError("Number of divisions must be higher or equal than one. Please check it!")	# Error if number of divisions is less than zero
     diff = (x_max - x_min)/n_divisions      # size of each division
     list = []       # creates a list
     i = 1   # variable created just to iterate with each division
@@ -177,7 +197,7 @@ def divide_into_ranges(x_min, x_max, n_divisions):  # Definition of divisions to
 
 def x_with_zero_ranges(x_ranges, function_ranges):   # Define the function
     if not(isinstance(x_ranges, list)) or not(isinstance(function_ranges, list)):
-        raise TypeError("x_ranges or function_ranges is not a list. Please check it!")	# Error raised when variable type for x_ranges and function_ranges are not a list.
+        raise TypeError("The input x_ranges or function_ranges is not a list. Please check it!")	# Error raised when variable type for x_ranges and function_ranges are not a list.
     x_ranges_with_zero = []     # Creates the output with the x ranges with zero(s) inside.
     i = 0   # iteration number
     for f in function_ranges:   # for each function range (list) in the list specified (list inside a list)
@@ -202,18 +222,23 @@ def x_with_zero_ranges(x_ranges, function_ranges):   # Define the function
 
 def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_iterations):    # Defines this function 
     if x_max <= x_min:
-        raise ValueError("Please check minimum and maximum values of x range.")	# Error when values for x_min and x_max are inverted
+        raise ValueError("The minimum and maximum values of the range are inverted. Please check them!")	# Error when values for x_min and x_max are inverted
     if tolerance <= 0 or limit_iterations <= 0:
-        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")	# Error when negative values of tolerance and limit_iterations were applied.
-    if P_target<0 or T<0 or xmol<0 or xmol>1 or x_min<=0 or x_max<=0:
-        raise ValueError("One or more input variables has invalid value. Please check them!")	# Error to check if variables has valid values.
+        raise ValueError("Invalid values for tolerance or limit_iterations. These numbers must be higher than zero.")# Error when negative values of tolerance and limit_iterations were applied.
+    #if P_target<0 or T<0 or xmol<0 or xmol>1 or x_min<=0 or x_max<=0:
+    #    raise ValueError("One or more input variables has invalid value. Please check them!")	# Error to check if variables has valid values.
     i = 1   # variable just to iterate
     # x_avg_before = 0
     # function_x_avg_before = 0
     while i <= limit_iterations:    # check if the number of iteration at the moment is above the limit number of iterations
         x_avg = x_min + (x_max - x_min)/2   # define the middle point (x average) between the x_min and x_max values
-        function_x_min = function_P_rho(x_min, T, xmol, P_target) # [bar]     # Define the function solution at x_min
-        function_x_avg = function_P_rho(x_avg, T, xmol, P_target) # [bar]     # Define the function solution at x_máx
+        try:
+            function_x_min = function_P_rho(x_min, T, xmol, P_target) # [bar]     # Define the function solution at x_min
+            function_x_avg = function_P_rho(x_avg, T, xmol, P_target) # [bar]     # Define the function solution at x_máx
+        except ValueError as error:
+            return("Error from function function_P_rho: \n" + str(error))
+        except Exception as error:
+            return("Unknown error: \nprobably there was an internal error from iapws.ammonia.NH3H2O._prop module. Please, check the input values and iapws module range. \nMore details about the error: " + str(error))
         if i > 1 and (abs(function_x_avg/P_target) < tolerance):   # Check if function in x_avg is zero or relative error in function solution is less than tolerance
             return x_avg    # return x average
         elif function_x_min*function_x_avg > 0:     # Check if the function solution in x_avg has the same signal than in x_min
@@ -226,7 +251,7 @@ def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_it
         
         
     if i > limit_iterations: # If the number of iterations exceed the number specified by the user, then shows an error (just printed)
-        raise StopIteration("Method failed to find a zero zolution within " + str(i-1) + " iteration(s). Try increase limit number of iterations.")   # Error message when limit_iterations has acchieved.
+        raise StopIteration("Method failed to find a zero solution within " + str(i-1) + " iteration(s). Try increase the limit of iterations.")   # Error message when limit_iterations has acchieved.
 
 
 # --------------------------------------------------------------------------
@@ -243,37 +268,55 @@ def find_zero_bisection_rho(P_target, T, xmol, x_min, x_max, tolerance, limit_it
 
 def my_prop_bissection(P_target, T, xmass, density_guess_min, density_guess_max, n_divisions, tolerance, limit_iterations):  # Defines the function
     if density_guess_min > 0.1:
-        print("\nWarning: can exist a lower density number. Try decreasing density_guess_min below 0.1 kg/m³ at least.\n")	# Density guess can be good, but it is desirable to have lower density guess when there is no sense in which range the solution is.
-    if P_target<0 or T<0 or xmass<0 or xmass>1 or density_guess_min<=0 or density_guess_max<=0 or n_divisions<1:
-        raise ValueError("One or more input variables has invalid value. Please check them!")	# Error to check if variables has valid values.
-    if tolerance <= 0 or limit_iterations <= 0:
-        raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")	# Error when negative values of tolerance and limit_iterations were applied.
+        print("\nWarning: \nThere can exist a lower density number for these pressure and temperature input values. Try decreasing density_guess_min at least 0.1 kg/m³ or below.\n")	# Density guess can be good, but it is desirable to have lower density guess when there is no sense in which range the solution is.
+    #if P_target<0: # or T<0: #or xmass<0: #or xmass>1:
+    #    raise ValueError("One or more input variables has invalid value. Please check them!")	# Error to check if variables has valid values.
+    #if tolerance <= 0: # or limit_iterations <= 0:
+    #    raise ValueError("Please check tolerance or limit_iterations values. These numbers must be higher than zero.")	# Error when negative values of tolerance and limit_iterations were applied.
     
     MW_NH3 = 17.03026 # [g/mol]     Referenced number from iapws, inside nh3h2o documentation.
     MW_H2O = 18.015268 # [g/mol]    Referenced number from iapws, inside nh3h2o documentation.
     xmol = ut.xmass_to_xmol(xmass,MW_NH3,MW_H2O) # [mol/mol]  # Transformation of mass fraction into molar fraction
-
-    x_ranges = divide_into_ranges(density_guess_min,density_guess_max,n_divisions)  # Divide rho range into small ones
+    
+    try:
+        x_ranges = divide_into_ranges(density_guess_min,density_guess_max,n_divisions)  # Divide rho range into small ones
+    except ValueError as error:
+        return("Error from function divide_into_ranges: \n" + str(error))
     function_ranges = []    # Define a list of function ranges
     for x_min, x_max in x_ranges:   # For each x_min and x_max in the list of list from x_ranges, do:
-        function_ranges.append([function_P_rho(x_min, T, xmol, P_target), function_P_rho(x_max, T, xmol, P_target)])    # Add a list of function solution pair in x_min and x_max (range)
-    x_zero_ranges = x_with_zero_ranges(x_ranges, function_ranges)  # Check if there are zeros between the ranges
+        try:
+            function_ranges.append([function_P_rho(x_min, T, xmol, P_target), function_P_rho(x_max, T, xmol, P_target)])    # Add a list of function solution pair in x_min and x_max (range)
+        except ValueError as error:
+            return("Error from function function_P_rho: \n" + str(error))
+        except Exception as error:
+            return("Unknown error: \nprobably there was an internal error from iapws.ammonia.NH3H2O._prop module. Please, check the input values and iapws module range. \nMore details about the error: " + str(error))
+    try: 
+        x_zero_ranges = x_with_zero_ranges(x_ranges, function_ranges)  # Check if there are zeros between the ranges
+    except TypeError as error:
+        return("Error from function x_with_zero_ranges: \n" + str(error))
+    except RuntimeWarning as warning:
+        return("Warning from function x_with_zero_ranges: \n" + str(warning))
 
 # Check if I have a range or zero points, and apply bisection method just within ranges
     x_with_zero = []    # Create a list of this variable
     for x in x_zero_ranges:     # Take each range into x_zero_ranges
-        if not(isinstance(x, list)):    # If the "range" is not a list (i.e. is a number, for example), then is added directly into the answer,m because it is necessarily a zero.
-            x_with_zero.append(x) # Added into the answer list
+        if not(isinstance(x, list)):    # Optional code. If the "range" is not a list (i.e. is a number, for example), then is added directly into the answer,m because it is necessarily a zero.
+            x_with_zero.append(x) # Optional code. Added into the answer list
         else:   # If is not a zero directly
-            x_zero = find_zero_bisection_rho(P_target,T,xmol,x[0],x[1],tolerance,limit_iterations)     # Apply the bissection method to find a zero           
+            try:
+                x_zero = find_zero_bisection_rho(P_target,T,xmol,x[0],x[1],tolerance,limit_iterations)     # Apply the bissection method to find a zero
+            except ValueError as error:
+                return("Error from function find_zero_bisection_rho: \n" + str(error))
+            except StopIteration as stop:
+                return("Limit iterations reached in function find_zero_bisection_rho: \n" + str(stop))
             x_with_zero.append(x_zero)  # Add the found zero into the list of x with solution equal to zero in function_P_rho
             
    
 # Printing answers
-    if x_with_zero == []:   # If the list is empty means it was not found a zero, so a message appears
-        raise RuntimeWarning("A zero point was not found. Try changing density range or increase the number of initial divisions (n_divisions).")     # Message that a zero has not found.
+    if x_with_zero == []:   # Optional code with code lines above? If the list is empty means it was not found a zero, so a message appears
+        raise RuntimeWarning("A zero point was not found. Try changing density range or increase the number of initial divisions (n_divisions).")     # Optional code with code lines above? Message that a zero has not found.
     else:   # If it has something inside the list, then:
-        rho_found = x_with_zero[0]   # IMPORTANT: Here i am assuming only the first zero point is valid. This can be changed if necessary.
+        rho_found = x_with_zero[0]   # IMPORTANT: Here I am assuming only the first zero point is valid. This can be changed if necessary.
         
     prop = {}   # Creating the properties dictionary
     prop["M"] = iapws.ammonia.H2ONH3()._prop(rho_found, T, xmol).get("M")     # Property Mixture molecular mass, [g/mol]
